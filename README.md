@@ -10,6 +10,8 @@ A personal repository for custom Docker images, docker-compose configurations, a
 custom-docker-files/
 ├── ubuntu2404-dev-test-env/     # Ubuntu 24.04 development environment
 │   └── Dockerfile               # Configured for C/C++ development with Neovim
+├── react-android-linux/         # React Native Android build environment
+│   └── Dockerfile               # Configured for React Native & Android builds
 ├── .github/
 │   └── copilot-instructions.md  # Context for AI-assisted development
 └── README.md                     # This file
@@ -48,6 +50,37 @@ docker run -it -v $(pwd):/home/devuser/workspace ubuntu2404-dev-test-env
 
 For more detailed information, see [`.github/copilot-instructions.md`](.github/copilot-instructions.md).
 
+### react-android-linux
+
+**Purpose**: A containerized build environment for React Native applications targeting Android, with full Java and Android SDK support.
+
+**What's Included**:
+- Base: Ubuntu 22.04 LTS
+- Java: OpenJDK 17 (required for Android development)
+- Node.js: v18.x with npm
+- Package Manager: Yarn (npm-based)
+- Android SDK: Tools, platform-tools, Android API 34, and build-tools
+- Utilities: Git, curl, wget, unzip, build-essential
+
+**Quick Start**:
+```bash
+# Build the image
+docker build -t react-android-linux ./react-android-linux
+
+# Run interactively
+docker run -it react-android-linux
+
+# Mount local React Native project
+docker run -it -v $(pwd):/app react-android-linux
+```
+
+**Key Features**:
+- Complete Android development setup (SDK, tools, API levels)
+- Node.js and Yarn pre-configured for React Native projects
+- Automated license acceptance for Android SDK
+- Ready for building APK/AAB files
+- Properly configured environment variables (ANDROID_HOME, ANDROID_SDK_ROOT)
+
 ## What You'll Find Here
 
 This repository documents:
@@ -60,7 +93,7 @@ This repository documents:
 ## Future Additions
 
 This repository will grow to include:
-- Additional Docker images (Python, Node.js, full-stack dev environments, etc.)
+- Additional Docker images (Python, full-stack dev environments, etc.)
 - Docker Compose files for multi-container setups
 - Documentation on networking, persistence, and production patterns
 - Comparison notes on different containerization approaches
