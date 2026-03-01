@@ -12,6 +12,8 @@ custom-docker-files/
 │   └── Dockerfile               # Configured for C/C++ development with Neovim
 ├── react-android-linux/         # React Native Android build environment
 │   └── Dockerfile               # Configured for React Native & Android builds
+├── vlc-build-env/               # VLC source code compilation environment
+│   └── Dockerfile               # Ubuntu 22.04 with VLC build dependencies
 ├── .github/
 │   └── copilot-instructions.md  # Context for AI-assisted development
 └── README.md                     # This file
@@ -80,6 +82,40 @@ docker run -it -v $(pwd):/app react-android-linux
 - Automated license acceptance for Android SDK
 - Ready for building APK/AAB files
 - Properly configured environment variables (ANDROID_HOME, ANDROID_SDK_ROOT)
+
+### vlc-build-env
+
+**Purpose**: A containerized build environment for compiling VLC media player from source code.
+
+**What's Included**:
+- Base: Ubuntu 22.04 LTS
+- Build tools: build-essential, CMake, Meson, Ninja, Autoconf, Automake, Libtool
+- Assembly tools: YASM, NASM
+- Parsing tools: Flex, Bison
+- Multimedia libraries: FFmpeg dev libraries (libavcodec, libavformat, libavutil, libswscale, libavfilter, libswresample)
+- Audio support: libasound2-dev (ALSA)
+- Security: libssl-dev
+- Build utilities: Git, pkg-config
+
+**Quick Start**:
+```bash
+# Build the image
+docker build -t vlc-build-env ./vlc-build-env
+
+# Run interactively
+docker run -it vlc-build-env
+
+# Mount local VLC source for compilation
+docker run -it -v $(pwd)/vlc:/workspace vlc-build-env
+```
+
+**Key Features**:
+- Full compilation toolchain for VLC media player
+- All required multimedia and codec libraries pre-installed
+- ALSA audio support
+- OpenSSL for secure connections
+- Ready to compile VLC source code with various plugins and features
+
 
 ## What You'll Find Here
 
