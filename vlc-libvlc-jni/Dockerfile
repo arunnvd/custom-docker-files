@@ -4,11 +4,9 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 ENV ANDROID_SDK_ROOT=/opt/android-sdk
 ENV ANDROID_SDK=/opt/android-sdk
-ENV ANDROID_NDK_ROOT=/opt/android-ndk-r21e
-ENV ANDROID_NDK=/opt/android-ndk-r21e
 ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
 
-ENV PATH=$JAVA_HOME/bin:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/tools:$ANDROID_SDK_ROOT/tools/bin:$ANDROID_NDK_ROOT:$PATH
+ENV PATH=$JAVA_HOME/bin:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/tools:$ANDROID_SDK_ROOT/tools/bin:$PATH
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
@@ -44,6 +42,8 @@ RUN dpkg --add-architecture i386 \
         wget \
         yasm \
         zlib1g:i386 \
+        sudo \
+        python3.10-venv \
     && rm -rf /var/lib/apt/lists/*
 
 
@@ -56,7 +56,7 @@ RUN mkdir -p ${ANDROID_SDK_ROOT}/cmdline-tools /opt/downloads \
     && rm -rf /opt/downloads
 
 
-# Accept licenses and install required SDK packages
+# Accept licenses and install Android SDK + NDK
 RUN mkdir -p /root/.android \
     && touch /root/.android/repositories.cfg \
     && sdkmanager --sdk_root=${ANDROID_SDK_ROOT} --update \
@@ -64,28 +64,41 @@ RUN mkdir -p /root/.android \
     && sdkmanager --sdk_root=${ANDROID_SDK_ROOT} \
         "platform-tools" \
         "build-tools;34.0.0" \
-        "platforms;android-34"
+        "platforms;android-34" \
+        "ndk;29.0.13113456"
 
 
-RUN cd /opt \
-    && wget -O android-ndk-r21e-linux-x86_64.zip https://dl.google.com/android/repository/android-ndk-r21e-linux-x86_64.zip \
-    && unzip android-ndk-r21e-linux-x86_64.zip \
-    && rm -f android-ndk-r21e-linux-x86_64.zip
+# Set NDK environment
+ENV ANDROID_NDK_ROOT=$ANDROID_SDK_ROOT/ndk/29.0.13113456
+ENV ANDROID_NDK=$ANDROID_SDK_ROOT/ndk/29.0.13113456
 
-RUN useradd --create-home --shell /bin/bash --uid 1000 builder \
+ENV PATH=$PATH:$ANDROID_NDK_ROOT
+
+ARG USERNAME=builder
+
+# Optional sanity check (helps debug CI builds)
+RUN java -version \
+    && sdkmanager --list > /dev/null \
+    && $ANDROID_NDK_ROOT/ndk-build --version
+
+RUN useradd --create-home --shell /bin/bash --uid 1000 $USERNAME \
+    && echo "$USERNAME ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/$USERNAME \
+    && chmod 0440 /etc/sudoers.d/$USERNAME \
     && mkdir -p /workspace \
-    && chown -R builder:builder /workspace ${ANDROID_SDK_ROOT} ${ANDROID_NDK_ROOT}
+    && chown -R $USERNAME:$USERNAME /workspace ${ANDROID_SDK_ROOT} ${ANDROID_NDK_ROOT}
 
-USER builder
+RUN usermod -aG sudo $USERNAME
+
+USER $USERNAME
 WORKDIR /workspace
 
-RUN printf '%s\n' \
-    'export ANDROID_SDK=/opt/android-sdk' \
-    'export ANDROID_SDK_ROOT=/opt/android-sdk' \
-    'export ANDROID_NDK=/opt/android-ndk-r21e' \
-    'export ANDROID_NDK_ROOT=/opt/android-ndk-r21e' \
-    'export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64' \
-    'export PATH=/opt/android-sdk/cmdline-tools/latest/bin:/opt/android-sdk/platform-tools:/opt/android-sdk/tools:/opt/android-sdk/tools/bin:/opt/android-ndk-r21e:$PATH' \
-    >> /home/builder/.bashrc
+#RUN printf '%s\n' \
+#    'export ANDROID_SDK=/opt/android-sdk' \
+#    'export ANDROID_SDK_ROOT=/opt/android-sdk' \
+#    'export ANDROID_NDK=/opt/android-ndk-r21e' \
+#    'export ANDROID_NDK_ROOT=/opt/android-ndk-r21e' \
+#    'export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64' \
+#    'export PATH=/opt/android-sdk/cmdline-tools/latest/bin:/opt/android-sdk/platform-tools:/opt/android-sdk/tools:/opt/android-sdk/tools/bin:/opt/android-ndk-r21e:$PATH' \
+#    >> /home/builder/.bashrc
 
 CMD ["/bin/bash"]
