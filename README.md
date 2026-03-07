@@ -14,6 +14,8 @@ custom-docker-files/
 │   └── Dockerfile               # Configured for React Native & Android builds
 ├── vlc-build-env/               # VLC source code compilation environment
 │   └── Dockerfile               # Ubuntu 22.04 with VLC build dependencies
+├── vlc-libvlc-jni/              # libvlc-jni Android bindings build environment
+│   └── Dockerfile               # Ubuntu 22.04 with Android SDK, NDK, and build tools
 ├── .github/
 │   └── copilot-instructions.md  # Context for AI-assisted development
 └── README.md                     # This file
@@ -82,6 +84,42 @@ docker run -it -v $(pwd):/app react-android-linux
 - Automated license acceptance for Android SDK
 - Ready for building APK/AAB files
 - Properly configured environment variables (ANDROID_HOME, ANDROID_SDK_ROOT)
+
+### vlc-libvlc-jni
+
+**Purpose**: A containerized build environment for compiling libvlc-jni (VLC Android bindings) from source code.
+
+**What's Included**:
+- Base: Ubuntu 22.04 LTS
+- Java: OpenJDK 17 JDK and JRE
+- Android SDK: Command-line tools, platform-tools, build-tools 34.0.0, Android API 34
+- Android NDK: Version 29.0.13113456 (C/C++ development support)
+- Build tools: build-essential, CMake, Automake, Autoconf, Libtool, Ant, Make
+- Assembly tools: YASM, Ragel
+- Parsing tools: Flex, M4
+- Compilation support: Protobuf compiler, pkg-config
+- Utilities: Git, wget, curl, unzip, SVN, Python 3
+- 32-bit libraries: For Android SDK compatibility
+- Unprivileged user (`builder`) with sudo access
+
+**Quick Start**:
+```bash
+# Build the image
+docker build -t vlc-libvlc-jni ./vlc-libvlc-jni
+
+# Run interactively
+docker run -it vlc-libvlc-jni
+
+# Mount local libvlc-jni source for compilation
+docker run -it -v $(pwd):/workspace vlc-libvlc-jni
+```
+
+**Key Features**:
+- Full Android development toolchain (SDK, NDK, build-tools)
+- All required C/C++ compilation tools for native Android development
+- Pre-configured environment variables (ANDROID_SDK_ROOT, ANDROID_NDK_ROOT, JAVA_HOME)
+- 32-bit library support for Android SDK tools compatibility
+- Ready to compile VLC JNI bindings for Android platforms
 
 ### vlc-build-env
 
@@ -190,7 +228,7 @@ While this is primarily a personal reference, constructive feedback is welcome. 
 
 ---
 
-**Last Updated**: February 2026
+**Last Updated**: March 2026
 
 **Maintainer**: Arun Raj
 
